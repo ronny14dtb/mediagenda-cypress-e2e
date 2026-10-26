@@ -1,165 +1,170 @@
-describe('MEDIAGENDA - Suite de Pruebas E2E Automatizadas (Cypress)', () => {
-  const baseUrl = 'https://mediagenda.tdea.edu.co'; // Dominio base asignado al PPI
+describe('PPI - Suite de Pruebas Automatizadas E2E (Sitio de Elección Libre)', () => {
+  const baseUrl = 'https://opensource-demo.orangehrmlive.com';
+
+  beforeEach(() => {
+    cy.viewport(1280, 720);
+  });
 
   // =========================================================================
-  // CASO DE PRUEBA 1: Autenticación de Paciente (URL 1: /login)
+  // CASO DE PRUEBA 1: Autenticación y Validación de Elementos Visuales
+  // URL 1: /web/index.php/auth/login
   // =========================================================================
-  it('TC_01 - Inicio de sesión válido y verificación de panel de usuario', () => {
+  it('TC_01 - Inicio de sesión válido, validación de estilos CSS y panel principal', () => {
     // Paso 1: Visitar URL de login
-    cy.visit(`${baseUrl}/login`);
+    cy.visit(`${baseUrl}/web/index.php/auth/login`);
 
     // Paso 2: Validar URL esperada
-    cy.url().should('eq', `${baseUrl}/login`);
+    cy.url().should('include', '/auth/login');
 
     // Paso 3: Validar título de la página
-    cy.title().should('eq', 'Iniciar Sesión | MediAgenda');
+    cy.title().should('eq', 'OrangeHRM');
 
     // Paso 4: Validar presencia y visibilidad del logo
-    cy.get('img.brand-logo').should('be.visible');
+    cy.get('img[alt="company-branding"]').should('be.visible');
 
-    // Paso 5: Validar propiedad CSS (color de fondo) del botón de submit
+    // Paso 5: Validar propiedad CSS (cursor pointer) en botón de submit
     cy.get('button[type="submit"]')
       .should('be.visible')
-      .should('have.css', 'background-color', 'rgb(0, 102, 204)');
+      .should('have.css', 'cursor', 'pointer');
 
-    // Paso 6: Ingresar credencial de usuario
-    cy.get('input#username')
+    // Paso 6: Validar estilo CSS (color de fondo del botón principal)
+    cy.get('button[type="submit"]')
+      .should('have.css', 'background-color', 'rgb(255, 123, 29)');
+
+    // Paso 7: Ingresar credencial de usuario
+    cy.get('input[name="username"]')
       .should('be.visible')
       .clear()
-      .type('paciente_prueba');
+      .type('Admin');
 
-    // Paso 7: Ingresar contraseña
-    cy.get('input#password')
+    // Paso 8: Ingresar contraseña
+    cy.get('input[name="password"]')
       .should('be.visible')
       .clear()
-      .type('ClaveSegura2026*');
+      .type('admin123');
 
-    // Paso 8: Marcar checkbox de términos/recordar sesión
-    cy.get('input#rememberSession')
-      .should('exist')
-      .check()
-      .should('be.checked');
+    // Paso 9: Validar texto informativo de ayuda (independiente del idioma)
+    cy.get('.orangehrm-login-forgot p')
+      .should('be.visible')
+      .and('not.be.empty');
 
-    // Paso 9: Clic en botón de ingreso
+    // Paso 10: Clic en botón de ingreso
     cy.get('button[type="submit"]').click();
 
-    // Paso 10: Validar redirección exitosa al dashboard
-    cy.url().should('include', '/dashboard');
+    // Paso 11: Validar redirección exitosa al dashboard
+    cy.url().should('include', '/dashboard/index');
 
-    // Paso 11: Aserción de texto del mensaje de bienvenida
-    cy.get('.welcome-banner')
+    // Paso 12: Aserción de texto del encabezado principal (independiente del idioma)
+    cy.get('.oxd-topbar-header-breadcrumb-module')
       .should('be.visible')
-      .and('contain.text', 'Bienvenido a MediAgenda');
+      .and('not.be.empty');
   });
 
   // =========================================================================
-  // CASO DE PRUEBA 2: Agendamiento de Cita Médica (URL 2: /citas/agendar)
+  // CASO DE PRUEBA 2: Módulo Administrativo y Menús Desplegables
+  // URL 2: /web/index.php/admin/viewSystemUsers
   // =========================================================================
-  it('TC_02 - Diligenciamiento de formulario de citas con dropdowns y estilos', () => {
-    // Paso 1: Navegar a la URL de agendamiento
-    cy.visit(`${baseUrl}/citas/agendar`);
+  it('TC_02 - Navegación a módulo de administración, menús desplegables y filtros', () => {
+    // Paso 1: Autenticación inicial
+    cy.visit(`${baseUrl}/web/index.php/auth/login`);
+    cy.get('input[name="username"]').type('Admin');
+    cy.get('input[name="password"]').type('admin123');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/dashboard/index');
 
-    // Paso 2: Validar URL esperada
-    cy.url().should('include', '/citas/agendar');
+    // Paso 2: Navegar a la segunda URL del dominio
+    cy.visit(`${baseUrl}/web/index.php/admin/viewSystemUsers`);
 
-    // Paso 3: Validar título de la página
-    cy.title().should('eq', 'Agendar Cita Médica | MediAgenda');
+    // Paso 3: Validar URL esperada
+    cy.url().should('include', '/admin/viewSystemUsers');
 
-    // Paso 4: Validar estilo CSS (tipografía) del encabezado
-    cy.get('h2.section-title')
+    // Paso 4: Validar título de la página
+    cy.title().should('eq', 'OrangeHRM');
+
+    // Paso 5: Validar tipografía CSS del encabezado de filtros
+    cy.get('h5.oxd-table-filter-title')
       .should('be.visible')
       .should('have.css', 'font-family')
-      .and('match', /Roboto|sans-serif|Segoe UI/);
+      .and('match', /Nunito|sans-serif/);
 
-    // Paso 5: Validar presencia del menú desplegable de especialidad
-    cy.get('select#select-especialidad').should('be.visible');
-
-    // Paso 6: Seleccionar especialidad en dropdown y validar valor
-    cy.get('select#select-especialidad')
-      .select('Medicina General')
-      .should('have.value', 'medicina_general');
-
-    // Paso 7: Validar presencia y seleccionar médico en segundo dropdown
-    cy.get('select#select-medico')
+    // Paso 6: Validar campo de texto de usuario y escribir
+    cy.get('.oxd-form-row input').first()
       .should('be.visible')
-      .select('Dr. Jhan Andrade')
-      .should('have.value', 'doc_andrade');
+      .type('Admin');
 
-    // Paso 8: Ingresar fecha de la consulta
-    cy.get('input#fechaCita')
-      .should('be.visible')
-      .type('2026-11-15');
+    // Paso 7: Interactuar con el menú desplegable (Dropdown)
+    cy.get('.oxd-select-text').first().click();
 
-    // Paso 9: Seleccionar hora en menú de franjas
-    cy.get('select#franja-horaria')
-      .select('08:00 AM')
-      .should('have.value', '08:00');
+    // Paso 8: Seleccionar primera opción válida del dropdown
+    cy.get('[role="option"]').eq(1).click();
 
-    // Paso 10: Diligenciar motivo de consulta en textarea
-    cy.get('textarea#motivoConsulta')
-      .should('be.visible')
-      .type('Control médico general programado de rutina.');
+    // Paso 9: Validar estilo CSS (color de texto) del botón de búsqueda
+    cy.get('button[type="submit"]')
+      .should('have.css', 'color', 'rgb(255, 255, 255)');
 
-    // Paso 11: Confirmar y enviar solicitud de cita
-    cy.get('button#btn-confirmar-cita')
-      .should('have.css', 'cursor', 'pointer')
-      .click();
+    // Paso 10: Ejecutar acción de búsqueda
+    cy.get('button[type="submit"]').click({ force: true });
 
-    // Paso 12: Validar mensaje de confirmación exitosa
-    cy.get('.alert-success')
-      .should('be.visible')
-      .should('contain.text', 'Cita médica registrada con éxito');
-  });
+    // Paso 11: Validar presencia de la tabla de resultados
+    cy.get('.oxd-table-body', { timeout: 10000 }).should('be.visible');
 
-  // =========================================================================
-  // CASO DE PRUEBA 3: Consulta y Filtrado de Disponibilidad (URL 3: /medicos/disponibilidad)
-  // =========================================================================
-  it('TC_03 - Consulta de disponibilidad de especialistas e inspección visual', () => {
-    // Paso 1: Visitar la URL de disponibilidad de la clínica
-    cy.visit(`${baseUrl}/medicos/disponibilidad`);
-
-    // Paso 2: Validar la URL esperada
-    cy.url().should('include', '/medicos/disponibilidad');
-
-    // Paso 3: Validar título exacto de la pestaña
-    cy.title().should('eq', 'Disponibilidad Médica | MediAgenda');
-
-    // Paso 4: Validar presencia del campo de búsqueda
-    cy.get('input#search-doctor')
-      .should('be.visible')
-      .type('Andrade');
-
-    // Paso 5: Ejecutar acción de filtrado mediante botón
-    cy.get('button#btn-buscar-agenda').click();
-
-    // Paso 6: Validar dropdown de ordenamiento de resultados
-    cy.get('select#sort-agenda')
-      .should('exist')
-      .select('horario-asc');
-
-    // Paso 7: Validar presencia de tarjetas de resultados
-    cy.get('.doctor-card')
+    // Paso 12: Aserción de texto en la tarjeta/fila encontrada
+    cy.get('.oxd-table-card')
       .should('have.length.greaterThan', 0)
       .first()
       .should('be.visible');
+  });
 
-    // Paso 8: Validar presencia y carga de imagen del profesional
-    cy.get('.doctor-card img.doctor-avatar')
-      .first()
+  // =========================================================================
+  // CASO DE PRUEBA 3: Catálogo de Empleados e Inspección Visual
+  // URL 3: /web/index.php/pim/viewEmployeeList
+  // =========================================================================
+  it('TC_03 - Consulta de directorio, validación de avatares e inspección visual', () => {
+    // Paso 1: Autenticación inicial
+    cy.visit(`${baseUrl}/web/index.php/auth/login`);
+    cy.get('input[name="username"]').type('Admin');
+    cy.get('input[name="password"]').type('admin123');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/dashboard/index');
+
+    // Paso 2: Navegar a la tercera URL del dominio
+    cy.visit(`${baseUrl}/web/index.php/pim/viewEmployeeList`);
+
+    // Paso 3: Validar URL esperada
+    cy.url().should('include', '/pim/viewEmployeeList');
+
+    // Paso 4: Validar título de la página
+    cy.title().should('eq', 'OrangeHRM');
+
+    // Paso 5: Validar presencia de imagen de avatar de usuario
+    cy.get('img.oxd-userdropdown-img')
       .should('be.visible')
       .and('have.attr', 'src');
 
-    // Paso 9: Validar estilo CSS (color de etiqueta de disponibilidad)
-    cy.get('.doctor-card .badge-disponible')
-      .first()
-      .should('have.css', 'color', 'rgb(255, 255, 255)');
+    // Paso 6: Validar estilo CSS de la cabecera (color de fondo)
+    cy.get('.oxd-topbar-header')
+      .should('have.css', 'background-color', 'rgb(255, 146, 11)');
 
-    // Paso 10: Hacer clic en ver detalle del horario
-    cy.get('.doctor-card .btn-ver-detalle').first().click();
-
-    // Paso 11: Validar aserción de texto en modal emergente
-    cy.get('.modal-disponibilidad')
+    // Paso 7: Validar input de ID de empleado y escribir
+    cy.get('.oxd-form-row input').eq(1)
       .should('be.visible')
-      .and('contain.text', 'Horarios Disponibles');
+      .type('00');
+
+    // Paso 8: Desplegar menú dropdown de estado de empleo
+    cy.get('.oxd-select-text').first().click();
+
+    // Paso 9: Seleccionar opción en el dropdown
+    cy.get('[role="option"]').eq(1).click();
+
+    // Paso 10: Ejecutar búsqueda con clic
+    cy.get('button[type="submit"]').click({ force: true });
+
+    // Paso 11: Validar existencia del contenedor de la tabla
+    cy.get('.oxd-table-body', { timeout: 10000 }).should('exist');
+
+    // Paso 12: Aserción de texto en la vista
+    cy.get('.orangehrm-paper-container')
+      .should('be.visible')
+      .and('not.be.empty');
   });
 });
